@@ -1,0 +1,114 @@
+{
+ 
+    "AWSTemplateFormatVersion": "2010-09-09",
+ 
+    "Description": "CloudFront Distribution for Hosting a Single ReactJS Site on CloudFront with an S3 backend and no Lambda@Edge integration",
+  
+    "Parameters": {
+ 
+        "RahmsDemoCachePolicyIdParameter": {
+            "Type": "String",
+            "Description": "The cache policy ID to link to this distribution"
+        },
+
+        "RahmsDemoOriginRequestPolicyIdParameter": {
+            "Type": "String",
+            "Description": "The origin request policy ID to link to this distribution"
+        },
+
+        "ProjectTagParam": {
+            "Type": "String",
+            "Description": "A tag called 'Project' will be added and this value will be placed in it.",
+            "Default": "https://github.com/nicc777/aws-react-hosting-poc"
+        }
+
+    },
+ 
+    "Resources": {
+
+        "RahmsDemoCloudFrontDistribution": {
+            "Type" : "AWS::CloudFront::Distribution",
+            "Properties" : {
+                "DistributionConfig": {
+                    "Comment": "Website for single ReactJS Site hosted on S3 origin with no Lambda Integration",
+                    "CustomErrorResponses": [
+                        {
+                            "ErrorCode" : 404,
+                            "ResponseCode" : 200,
+                            "ResponsePagePath" : "/site1/error.html"
+                        }
+                     ],
+                    "DefaultCacheBehavior": {
+                        "AllowedMethods": [ "GET", "HEAD", "OPTIONS" ],
+                        "CachedMethods": [ "GET", "HEAD", "OPTIONS" ],
+                        "CachePolicyId": { "Ref": "RahmsDemoCachePolicyIdParameter" },
+                        "Compress": true,
+                        "OriginRequestPolicyId": { "Ref": "RahmsDemoOriginRequestPolicyIdParameter" },
+                        "TargetOriginId": "RahmsDemoOrigin",
+                        "ViewerProtocolPolicy": "redirect-to-https"
+                    },
+                    "DefaultRootObject": "index.html",
+                    "Enabled": true,
+                    "HttpVersion": "http2",
+                    "IPV6Enabled": false,
+                    "Logging": {
+                        "Bucket": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    { "Fn::ImportValue" : "RahmsDemoLogsS3BucketName" },
+                                    ".s3.amazonaws.com"
+                                ]
+                            ]
+                        },
+                        "IncludeCookies": false,
+                        "Prefix": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    "cloudfront-",
+                                    {
+                                        "Ref": "RahmsDemoWebsiteName"
+                                    }
+                                ]
+                            ]
+                        }
+                    },
+                    "Origins": [
+                        {
+                            "DomainName": { "Fn::ImportValue" : "S3WebsiteBucketDomainName" },
+                            "Id": "RahmsDemoOrigin",
+                            "S3OriginConfig": {}
+                        }
+                    ],
+                    "PriceClass": "PriceClass_All",
+                    "ViewerCertificate": {
+                        "AcmCertificateArn" : { "Ref": "RahmsDemoAcmArnParameter" },
+                        "MinimumProtocolVersion" : "TLSv1.2_2018",
+                        "SslSupportMethod" : "sni-only"
+                    }
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ]
+            }
+        }
+
+    },
+ 
+    "Outputs": {
+ 
+        "RahmsDemoCloudFrontDistributionId": {
+            "Value": { "Ref": "RahmsDemoCloudFrontDistribution" },
+            "Description": "The CloudFront Distribution ID",
+            "Export": {
+                "Name": "RahmsDemoCloudFrontDistributionId"
+            }
+        }
+
+    }
+
+}
