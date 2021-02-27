@@ -1,0 +1,64 @@
+{
+
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "S3 Bucket for CloudFormation Artifacts - This bucket holds the artifacts like Lambda function ZIP files that needs to be referred to by CloudFormation",
+
+    "Parameters": {
+
+        "BucketNameParam": {
+            "Type": "String",
+            "Description": "The name of the bucket, which must be completely unique across all of AWS S3"
+        },
+
+        "ProjectTagParam": {
+            "Type": "String",
+            "Description": "A tag called 'Project' will be added and this value will be placed in it.",
+            "Default": "https://github.com/nicc777/aws-react-hosting-poc"
+        }
+
+    },
+
+    "Resources": {
+
+        "S3ArtifactBucket" : {
+            "Type" : "AWS::S3::Bucket",
+            "DeletionPolicy": "Delete",
+            "Properties" : {
+                "BucketName" : {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "rahms-demo-",
+                            { "Ref" : "BucketNameParam" },
+                            "-artifacts"
+                        ]
+                    ]
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ]
+            }
+        }
+
+    },
+
+    "Outputs": {
+
+        "S3ArtifactBucketName": {
+            "Value": { "Ref": "S3ArtifactBucket" },
+            "Description": "The S3 Artifact bucket name",
+            "Export" : { "Name" : "S3ArtifactBucketName" }
+        },
+        "S3ArtifactBucketArn": {
+            "Value": { "Fn::GetAtt": [ "S3ArtifactBucket", "Arn" ] },
+            "Description": "The S3 Artifact bucket ARN",
+            "Export" : { "Name" : "S3ArtifactBucketArn" }
+        }
+
+    }
+
+}

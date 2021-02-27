@@ -1,0 +1,95 @@
+{
+
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "S3 Bucket for hosting the example ReactJS sites in the demo",
+
+    "Parameters": {
+
+        "BucketNameParam": {
+            "Type": "String",
+            "Description": "The name of the bucket, which must be completely unique across all of AWS S3."
+        },
+
+        "ProjectTagParam": {
+            "Type": "String",
+            "Description": "A tag called 'Project' will be added and this value will be placed in it.",
+            "Default": "https://github.com/nicc777/aws-react-hosting-poc"
+        }
+
+    },
+
+    "Resources": {
+
+        "S3WebsiteBucket" : {
+            "Type" : "AWS::S3::Bucket",
+            "DeletionPolicy": "Delete",
+            "Properties" : {
+                "AccessControl": "PublicRead",
+                "BucketName" : {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "rahms-demo-",
+                            { "Ref" : "BucketNameParam" },
+                            "-website"
+                        ]
+                    ]
+                },
+                "WebsiteConfiguration": {
+                    "IndexDocument": "index.html",
+                    "ErrorDocument": "error.html"
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ]
+            }
+        }
+
+    },
+
+    "Outputs": {
+
+        "S3WebsiteBucketName": {
+            "Value": { "Ref": "S3WebsiteBucket" },
+            "Description": "The S3 Artifact bucket name",
+            "Export" : { "Name" : "S3WebsiteBucketName" }
+        },
+        "S3WebsiteBucketArn": {
+            "Value": { "Fn::GetAtt": [ "S3WebsiteBucket", "Arn" ] },
+            "Description": "The S3 Artifact bucket ARN",
+            "Export" : { "Name" : "S3WebsiteBucketArn" }
+        },
+        "S3WebsiteURL": {
+            "Value": {
+                "Fn::GetAtt": [
+                    "S3WebsiteBucket",
+                    "WebsiteURL"
+                ]
+            },
+            "Description": "URL for website hosted on S3"
+        },
+        "S3WebsiteSecureURL": {
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://",
+                        {
+                            "Fn::GetAtt": [
+                                "S3WebsiteBucket",
+                                "DomainName"
+                            ]
+                        }
+                    ]
+                ]
+            },
+            "Description": "Name of S3 bucket to hold website content"
+        }
+
+    }
+
+}
