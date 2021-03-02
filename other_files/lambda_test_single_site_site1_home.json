@@ -4,9 +4,9 @@
         "cf": {
           "config": {
             "distributionDomainName": "__DIST_ID__.cloudfront.net",
-            "distributionId": "EDFDVBD6EXAMPLE",
+            "distributionId": "xxxxxxxxxx",
             "eventType": "viewer-request",
-            "requestId": "4TyzHTaYWb1GX1qTfsHhEqV6HUDd_BzoBZnwfnvQc_1oF26ClkoUSEQ=="
+            "requestId": "xxxxxxxxxx=="
           },
           "request": {
             "clientIp": "xxx.xxx.xxx.xxx",

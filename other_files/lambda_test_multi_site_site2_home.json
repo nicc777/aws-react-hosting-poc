@@ -31,8 +31,8 @@
               ]
             },
             "method": "GET",
-            "querystring": "",
-            "uri": "/"
+            "querystring": "target=/site2",
+            "uri": "/site2/index.html"
           }
         }
       }
