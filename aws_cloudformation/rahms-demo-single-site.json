@@ -1,0 +1,132 @@
+{
+ 
+    "AWSTemplateFormatVersion": "2010-09-09",
+ 
+    "Description": "CloudFront Distribution for Hosting a Single ReactJS Site on CloudFront with an S3 backend and no Lambda@Edge integration",
+  
+    "Parameters": {
+ 
+        "ProjectTagParam": {
+            "Type": "String",
+            "Description": "A tag called 'Project' will be added and this value will be placed in it.",
+            "Default": "https://github.com/nicc777/aws-react-hosting-poc"
+        }
+
+    },
+ 
+    "Resources": {
+
+        "RahmsDemoCloudFrontCachePolicy": {
+            "Type" : "AWS::CloudFront::CachePolicy",
+            "Properties" : {
+                "CachePolicyConfig" : {
+                    "Comment" : "rahms demo cache policy",
+                    "DefaultTTL" : 300,
+                    "MaxTTL" : 300,
+                    "MinTTL" : 5,
+                    "Name" : "RahmsDemoCachePolicy",
+                    "ParametersInCacheKeyAndForwardedToOrigin" : {
+                        "CookiesConfig" : {
+                            "CookieBehavior" : "all"
+                        },
+                        "EnableAcceptEncodingGzip" : true,
+                        "HeadersConfig" : {
+                            "HeaderBehavior" : "none"
+                        },
+                        "QueryStringsConfig" : {
+                            "QueryStringBehavior" : "all"
+                        }
+                    }
+                }
+            }
+        },
+
+        "RahmsDemoCloudFrontOriginRequestPolicy": {
+            "Type" : "AWS::CloudFront::OriginRequestPolicy",
+            "Properties" : {
+                "OriginRequestPolicyConfig" : {
+                    "Comment" : "demo origin policy",
+                    "CookiesConfig" : {
+                        "CookieBehavior" : "all"
+                    },
+                    "HeadersConfig" : {
+                        "HeaderBehavior" : "whitelist",
+                        "Headers" : [ "user-agent", "accept" ]
+                    },
+                    "Name" : "RahmsDemoOriginPolicy",
+                    "QueryStringsConfig" : {
+                        "QueryStringBehavior" : "all"
+                    }
+                }
+            }
+        },
+
+        "RahmsDemoCloudFrontDistribution": {
+            "Type" : "AWS::CloudFront::Distribution",
+            "Properties" : {
+                "DistributionConfig": {
+                    "Comment": "Website for single ReactJS Site hosted on S3 origin with no Lambda Integration",
+                    "CustomErrorResponses": [
+                        {
+                            "ErrorCode" : 404,
+                            "ResponseCode" : 200,
+                            "ResponsePagePath" : "/error.html"
+                        }
+                     ],
+                    "DefaultCacheBehavior": {
+                        "AllowedMethods": [ "GET", "HEAD", "OPTIONS" ],
+                        "CachedMethods": [ "GET", "HEAD", "OPTIONS" ],
+                        "CachePolicyId": { "Ref": "RahmsDemoCloudFrontCachePolicy" },
+                        "Compress": true,
+                        "OriginRequestPolicyId": { "Ref": "RahmsDemoCloudFrontOriginRequestPolicy" },
+                        "TargetOriginId": "RahmsDemoOrigin",
+                        "ViewerProtocolPolicy": "redirect-to-https",
+                        "LambdaFunctionAssociations" : [
+                            {
+                                "EventType" : "viewer-request",
+                                "IncludeBody" : false,
+                                "LambdaFunctionARN" : { "Fn::ImportValue" : "RahmsDemoLambdaFunctionVersionArn" }
+                            }
+                        ]
+                    },
+                    "DefaultRootObject": "index.html",
+                    "Enabled": true,
+                    "HttpVersion": "http2",
+                    "IPV6Enabled": false,
+                    "Origins": [
+                        {
+                            "DomainName": { "Fn::ImportValue" : "S3WebsiteBucketDomainName" },
+                            "Id": "RahmsDemoOrigin",
+                            "S3OriginConfig": {}
+                        }
+                    ],
+                    "PriceClass": "PriceClass_All",
+                    "ViewerCertificate": {
+                        "CloudFrontDefaultCertificate": true,
+                        "MinimumProtocolVersion" : "TLSv1.2_2018"
+                    }
+                },
+                "Tags" : [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ]
+            }
+        }
+
+    },
+ 
+    "Outputs": {
+ 
+        "RahmsDemoCloudFrontDistributionId": {
+            "Value": { "Ref": "RahmsDemoCloudFrontDistribution" },
+            "Description": "The CloudFront Distribution ID",
+            "Export": {
+                "Name": "RahmsDemoCloudFrontDistributionId"
+            }
+        }
+
+    }
+
+}

@@ -1,0 +1,146 @@
+{
+
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "Lambda functions deployment as Lambda@Edge Viewer Request filter",
+
+    "Parameters": {
+
+        "SourceBucketNameParam": {
+            "Type": "String",
+            "Description": "The name of the website bucket that hosts the Lambda ZIP file."
+        },
+
+        "RahmsLambdaZipFileS3KeyParam": {
+            "Type": "String",
+            "Description": "The Lambda ZIP file name",
+            "Default": "cloudfront_singlesite_react_path_fixer.py.zip"
+        },
+
+        "ProjectTagParam": {
+            "Type": "String",
+            "Description": "A tag called 'Project' will be added and this value will be placed in it.",
+            "Default": "https://github.com/nicc777/aws-react-hosting-poc"
+        }
+
+    },
+
+    "Resources": {
+
+        "RahmsDemoLambdaRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "",
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com",
+                                    "edgelambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Description": "Lambda role for RAHMS Demo Lambda Functions",
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "arn:aws:logs:*:*:*"
+                                }
+                            ]
+                        },
+                        "PolicyName": "policy-lambda-cloudwatch-rahms-01"
+                    }
+                ],
+                "RoleName": "role-lambda-rahms-demo-01",
+                "Tags": [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ]
+            }
+        },
+
+        "RahmsDemoLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Code": {
+                    "S3Bucket": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "rahms-demo-",
+                            { "Ref" : "SourceBucketNameParam" },
+                            "-artifacts"
+                            ]
+                        ]
+                    },
+                    "S3Key": { "Ref": "RahmsLambdaZipFileS3KeyParam" }
+                },
+                "Description": "Lambda Function to intercept and potentially correct requests from the viewer before it is passed to the origin",
+                "Handler": "cloudfront_singlesite_react_path_fixer.lambda_handler",
+                "MemorySize": 128,
+                "Role": {
+                    "Fn::GetAtt": [
+                        "RahmsDemoLambdaRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.8",
+                "Tags": [
+                    {
+                        "Key" : "Project",
+                        "Value" : { "Ref" : "ProjectTagParam" }
+                    }
+                ],
+                "Timeout": 5
+              }
+        },
+
+        "RahmsDemoLambdaFunctionVersion": {
+            "Type" : "AWS::Lambda::Version",
+            "Properties" : {
+                "Description" : "Deployment of the function required for Lambda at Edge - version 1",
+                "FunctionName" : { "Ref": "RahmsDemoLambdaFunction" }
+            }
+        }
+
+    },
+
+    "Outputs": {
+
+        "RahmsDemoLambdaFunctionName": {
+            "Description": "Lambda Function Name",
+            "Value": { "Ref": "RahmsDemoLambdaFunction" },
+            "Export" : { "Name" : "RahmsDemoLambdaFunctionName" }
+        },
+
+        "RahmsDemoLambdaFunctionArn": {
+            "Description": "Lambda Function ARN",
+            "Value": { "Fn::GetAtt": [ "RahmsDemoLambdaFunction", "Arn" ] },
+            "Export" : { "Name" : "RahmsDemoLambdaFunctionArn" }
+        },
+
+        "RahmsDemoLambdaFunctionVersionArn": {
+            "Description": "Lambda Function Deployed Version ARN",
+            "Value": { "Ref": "RahmsDemoLambdaFunctionVersion" },
+            "Export" : { "Name" : "RahmsDemoLambdaFunctionVersionArn" }
+        }
+
+    }
+
+}
